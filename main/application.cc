@@ -433,7 +433,15 @@ void Application::Start() {
                         if (listening_mode_ == kListeningModeManualStop) {
                             SetDeviceState(kDeviceStateIdle);
                         } else {
-                            SetDeviceState(kDeviceStateListening);
+                            // SetDeviceState(kDeviceStateListening);
+                            bool wait = false;
+                            if(!aborted_){
+                                wait = true;
+                                audio_service_.WaitForPlayCompletion(200);
+                            }
+                            if(device_state_ == kDeviceStateSpeaking && (!wait || (wait && !aborted_))){
+                                SetDeviceState(kDeviceStateListening);
+                            }
                         }
                     }
                 });
