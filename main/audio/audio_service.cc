@@ -535,6 +535,21 @@ void AudioService::EnableDeviceAec(bool enable) {
     audio_processor_->EnableDeviceAec(enable);
 }
 
+bool AudioService::WaitForPlayCompletion(int timeout_ms) {
+    std::unique_lock<std::mutex> lock(audio_queue_mutex_);
+    bool status = true; 
+    if(timeout_ms == -1){
+        audio_queue_cv_.wait(lock, [this]{
+            return audio_decode_queue_.empty() && audio_playback_queue_.empty();
+        });
+    }else{
+        status = audio_queue_cv_.wait_for(lock, std::chrono::milliseconds(timeout_ms), [this]{
+            return audio_decode_queue_.empty() && audio_playback_queue_.empty();
+        });
+    }
+    return status;
+}
+
 void AudioService::SetCallbacks(AudioServiceCallbacks& callbacks) {
     callbacks_ = callbacks;
 }
