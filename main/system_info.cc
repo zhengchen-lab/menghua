@@ -43,6 +43,19 @@ std::string SystemInfo::GetMacAddress() {
     return std::string(mac_str);
 }
 
+std::string SystemInfo::GetWifiName(const std::string& prefix) {
+    // Get MAC and use it to generate a unique SSID
+    uint8_t mac[6];
+#if CONFIG_IDF_TARGET_ESP32P4
+    esp_wifi_get_mac(WIFI_IF_AP, mac);
+#else
+    ESP_ERROR_CHECK(esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP));
+#endif
+    char ssid[32];
+    snprintf(ssid, sizeof(ssid), "%s-%02X%02X", prefix.c_str(), mac[4], mac[5]);
+    return std::string(ssid);
+}
+
 std::string SystemInfo::GetChipModelName() {
     return std::string(CONFIG_IDF_TARGET);
 }
