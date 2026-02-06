@@ -119,6 +119,11 @@ void Application::CheckNewVersion(Ota& ota) {
             audio_service_.Stop();
             vTaskDelay(pdMS_TO_TICKS(1000));
 
+            if (!ota.GetFirmwareUrl().empty()) {
+                board.StartBlufiOtaMode(ota.GetFirmwareUrl(), ota.GetFirmwareVersion(), ota.GetMd5());
+                return;
+            }
+
             bool upgrade_success = ota.StartUpgrade([display](int progress, size_t speed) {
                 std::thread([display, progress, speed]() {
                     char buffer[32];
@@ -373,6 +378,8 @@ void Application::Start() {
     // Check for new firmware version or get the MQTT broker address
     Ota ota;
     CheckNewVersion(ota);
+    int interrupteMode = ota.GetOtaAgentInterruptMode();
+    aec_mode_ = interrupteMode == 0 ? kAecOff : kAecOnDeviceSide;
 
     // Initialize the protocol
     display->SetStatus(Lang::Strings::LOADING_PROTOCOL);
